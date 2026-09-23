@@ -24,6 +24,8 @@ jobs:
         run: python -m py_compile server.py
       - name: Build EXE
         run: pyinstaller --noconfirm --clean --onefile --console --name SafeWindowsMCP --collect-all mcp server.py
+      - name: Smoke test packaged EXE
+        run: python smoke_test.py
       - name: Create SHA-256 checksum
         shell: pwsh
         run: |
