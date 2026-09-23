@@ -1,0 +1,41 @@
+name: Build Windows EXE
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements.txt "pyinstaller>=6,<7"
+      - name: Validate source
+        run: python -m py_compile server.py
+      - name: Build EXE
+        run: pyinstaller --noconfirm --clean --onefile --console --name SafeWindowsMCP --collect-all mcp server.py
+      - name: Create SHA-256 checksum
+        shell: pwsh
+        run: |
+          $hash = (Get-FileHash dist/SafeWindowsMCP.exe -Algorithm SHA256).Hash.ToLowerInvariant()
+          "$hash  SafeWindowsMCP.exe" | Set-Content -Encoding ascii dist/SafeWindowsMCP.exe.sha256
+          Get-Content dist/SafeWindowsMCP.exe.sha256
+      - uses: actions/upload-artifact@v4
+        with:
+          name: SafeWindowsMCP-windows
+          path: |
+            dist/SafeWindowsMCP.exe
+            dist/SafeWindowsMCP.exe.sha256
+            README.md
+            config.example.json
+          if-no-files-found: error
